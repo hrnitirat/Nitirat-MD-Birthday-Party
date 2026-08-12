@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nitirat MD Party — Newspaper Photo Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Thai:wght@400;600;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --ink:#181512;
+  --paper:#f4efe3;
+  --paper-shadow:#d8d2c0;
+  --room:#141210;
+  --room-2:#211d19;
+  --accent:#c9a227;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:radial-gradient(1200px 700px at 50% -10%, var(--room-2), var(--room) 70%);
+  color:var(--paper);
+  font-family:'Noto Serif','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif;
+  min-height:100vh;
+}
+.screen{display:none;max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+.screen.active{display:block}
+
+/* ---------- header ---------- */
+.masthead{
+  text-align:center;border-top:3px double var(--paper);border-bottom:3px double var(--paper);
+  padding:14px 0;margin-bottom:26px;
+}
+.masthead h1{font-family:'UnifrakturMaguntia',serif;font-size:clamp(30px,6vw,54px);letter-spacing:1px}
+.masthead .sub{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:12px;text-transform:uppercase;opacity:.75;margin-top:4px}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;text-transform:uppercase;
+  background:var(--paper);color:var(--ink);border:none;padding:13px 26px;font-size:14px;
+  cursor:pointer;transition:.15s;border:2px solid var(--paper);
+}
+.btn:hover{background:transparent;color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--paper)}
+.btn.ghost:hover{background:var(--paper);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.center{text-align:center}
+
+/* ---------- language ---------- */
+.lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:820px;margin:0 auto}
+.lang-card{
+  border:1px solid rgba(244,239,227,.35);padding:26px 10px;text-align:center;cursor:pointer;transition:.15s;
+  background:rgba(244,239,227,.03);
+}
+.lang-card:hover,.lang-card.sel{border-color:var(--paper);background:rgba(244,239,227,.1)}
+.lang-card .big{font-size:30px;font-weight:700;font-family:'Playfair Display','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif}
+.lang-card .small{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.65;margin-top:8px}
+.step-label{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:12px;text-transform:uppercase;opacity:.6;text-align:center;margin:8px 0 20px}
+
+/* ---------- layouts ---------- */
+.layout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;max-width:900px;margin:0 auto}
+.layout-card{border:1px solid rgba(244,239,227,.35);cursor:pointer;transition:.15s;background:rgba(244,239,227,.03);padding:14px}
+.layout-card:hover,.layout-card.sel{border-color:var(--paper);background:rgba(244,239,227,.1)}
+.layout-card .thumb{background:var(--paper);aspect-ratio:210/297;padding:7%;display:flex;flex-direction:column;gap:4%}
+.layout-card .t-head{height:9%;background:var(--ink)}
+.layout-card .t-row{display:flex;gap:4%;flex:1}
+.layout-card .t-photo{background:#8b857a;flex:1}
+.layout-card .t-col{display:flex;flex-direction:column;gap:6%;flex:1}
+.layout-card .t-text{background:#c9c2ae;flex:1}
+.layout-card .name{font-family:'Oswald',sans-serif;letter-spacing:2px;font-size:13px;text-transform:uppercase;text-align:center;margin-top:12px}
+.layout-card .shots{text-align:center;font-size:12px;opacity:.6;margin-top:4px}
+
+/* ---------- camera ---------- */
+.cam-wrap{position:relative;max-width:720px;margin:0 auto;border:1px solid rgba(244,239,227,.4);background:#000}
+video{width:100%;display:block;transform:scaleX(-1)}
+.count-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:900;font-size:140px;color:#fff;
+  text-shadow:0 0 40px rgba(0,0,0,.8);pointer-events:none;
+}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .1s}
+.flash.on{opacity:.9}
+.shot-dots{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--paper);opacity:.5}
+.dot.done{background:var(--paper);opacity:1}
+.cam-msg{text-align:center;font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;margin-top:14px;min-height:24px}
+
+/* ---------- printing ---------- */
+.printer{max-width:520px;margin:30px auto;text-align:center}
+.printer .slot{height:14px;background:#000;border:1px solid rgba(244,239,227,.5);border-radius:7px;margin-bottom:0;position:relative;z-index:2}
+.print-window{overflow:hidden;height:0;transition:height 3.2s cubic-bezier(.25,.7,.3,1)}
+.print-window img{width:100%;display:block;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.print-status{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:13px;opacity:.7;margin:18px 0}
+@keyframes blink{50%{opacity:.2}}
+.print-status.working{animation:blink 1s infinite}
+
+/* ---------- result ---------- */
+.tone-bar{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:22px;flex-wrap:wrap}
+.tone-label{font-family:'Oswald',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:12px;opacity:.6;margin-right:6px}
+.tone-btn{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:1px;background:transparent;color:var(--paper);border:1px solid rgba(244,239,227,.4);padding:8px 18px;font-size:13px;cursor:pointer;transition:.15s}
+.tone-btn:hover{border-color:var(--paper)}
+.tone-btn.sel{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.tone-btn:disabled{opacity:.4;cursor:wait}
+.result-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+.drive-note{font-size:12px;opacity:.55;text-align:center;margin-top:14px}
+.gear{position:fixed;top:14px;right:14px;background:none;border:1px solid rgba(244,239,227,.4);color:var(--paper);padding:6px 10px;cursor:pointer;font-size:16px;z-index:50}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:60}
+.modal.open{display:flex}
+.modal .box{background:var(--room-2);border:1px solid rgba(244,239,227,.4);padding:26px;max-width:460px;width:92%}
+.modal input{width:100%;padding:10px;margin:12px 0;background:#0d0c0a;border:1px solid rgba(244,239,227,.35);color:var(--paper);font-family:inherit}
+.modal h3{font-family:'Oswald',sans-serif;letter-spacing:2px}
+.modal p{font-size:13px;opacity:.7;margin-top:8px}
+
+/* ============================================================
+   THE PAPER (A4 render target) 794 x 1123 px = A4 @96dpi
+   ============================================================ */
+#paperStage{position:fixed;left:-3000px;top:0}
+.paper{
+  width:794px;height:1123px;background:#f6f2e7;color:#141210;position:relative;
+  padding:46px 44px;font-family:'Noto Serif','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(120,100,60,.05), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(120,100,60,.06), transparent 60%);
+}
+.paper *{line-height:1.32}
+.p-rule{border:0;border-top:1.5px solid #141210}
+.p-rule.thick{border-top:3px solid #141210}
+.p-rule.dbl{border-top:1px solid #141210;position:relative;height:5px}
+.p-rule.dbl::after{content:'';position:absolute;left:0;right:0;top:3px;border-top:1px solid #141210}
+.p-topline{display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:5px 0}
+.p-masthead{font-family:'UnifrakturMaguntia',serif;text-align:center;font-size:64px;padding:6px 0 2px}
+.p-tagline{text-align:center;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;padding-bottom:8px}
+.p-headline{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;text-align:center;letter-spacing:1px}
+.p-photo{background:#000;overflow:hidden;position:relative}
+.p-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.p-caption{font-size:10.5px;font-style:italic;text-align:center;padding-top:4px}
+.p-body{font-size:12px;text-align:justify;column-gap:16px}
+.p-body p{margin-bottom:8px;text-indent:1.2em}
+.p-kicker{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;text-align:center;border-top:1.5px solid #141210;border-bottom:1.5px solid #141210;padding:4px 0;margin:10px 0}
+.p-blackbox{background:#141210;color:#f6f2e7;padding:14px;text-align:center}
+.p-blackbox .bb-t{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:18px;letter-spacing:1px}
+.p-blackbox .bb-s{font-size:11px;margin-top:8px;font-style:italic}
+.p-datebox{border:2px solid #141210;text-align:center;padding:10px 6px;font-family:'Oswald',sans-serif}
+.p-footer{position:absolute;left:44px;right:44px;bottom:30px;text-align:center;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;border-top:3px double #141210;padding-top:8px}
+</style>
+</head>
+<body>
+
+<button class="gear" id="gearBtn" title="Google Drive settings">⚙</button>
+
+<!-- STEP 1: language -->
+<section class="screen active" id="scrLang">
+  <div class="masthead">
+    <h1>Nitirat MD Party</h1>
+    <div class="sub">Newspaper Photo Booth · Special Edition</div>
+  </div>
+  <div class="step-label">Step 1 — Select Language / เลือกภาษา</div>
+  <div class="lang-grid">
+    <div class="lang-card" data-lang="th"><div class="big">ภาษาไทย</div><div class="small">Thai</div></div>
+    <div class="lang-card" data-lang="en"><div class="big">English</div><div class="small">English</div></div>
+    <div class="lang-card" data-lang="zh"><div class="big">中文</div><div class="small">Chinese</div></div>
+    <div class="lang-card" data-lang="ko"><div class="big">한국어</div><div class="small">Korean</div></div>
+  </div>
+</section>
+
+<!-- STEP 2: layout -->
+<section class="screen" id="scrLayout">
+  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="layoutSub">Choose your front page</div></div>
+  <div class="step-label" id="layoutStep">Step 2 — Choose Layout</div>
+  <div class="layout-grid">
+    <div class="layout-card" data-layout="1">
+      <div class="thumb">
+        <div class="t-head"></div>
+        <div class="t-row"><div class="t-photo" style="flex:1.4"></div><div class="t-col"><div class="t-text"></div><div class="t-photo"></div></div></div>
+        <div class="t-row" style="flex:.7"><div class="t-photo"></div><div class="t-text"></div></div>
+      </div>
+      <div class="name">The Main Characters</div><div class="shots">📷 × 3</div>
+    </div>
+    <div class="layout-card" data-layout="2">
+      <div class="thumb">
+        <div class="t-head"></div>
+        <div class="t-photo" style="flex:1.6"></div>
+        <div class="t-row" style="flex:.8"><div class="t-text"></div><div class="t-text"></div><div class="t-text"></div></div>
+      </div>
+      <div class="name">The Gazette</div><div class="shots">📷 × 1</div>
+    </div>
+    <div class="layout-card" data-layout="3">
+      <div class="thumb">
+        <div class="t-head"></div>
+        <div class="t-row"><div class="t-photo"></div><div class="t-col"><div class="t-text"></div><div class="t-text"></div></div></div>
+        <div class="t-row" style="flex:.9"><div class="t-col"><div class="t-text"></div></div><div class="t-photo"></div></div>
+      </div>
+      <div class="name">Birthday Post</div><div class="shots">📷 × 2</div>
+    </div>
+  </div>
+  <div class="center" style="margin-top:26px"><button class="btn ghost" id="backLang">← Back</button></div>
+</section>
+
+<!-- STEP 3: camera -->
+<section class="screen" id="scrCam">
+  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="camSub">Look at the camera!</div></div>
+  <div class="cam-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="count-overlay" id="countOverlay"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+  <div class="shot-dots" id="shotDots"></div>
+  <div class="cam-msg" id="camMsg"></div>
+  <div class="center" style="margin-top:12px">
+    <button class="btn" id="startShoot">Start 📸</button>
+    <button class="btn ghost" id="backLayout">← Back</button>
+  </div>
+</section>
+
+<!-- STEP 4: printing / result -->
+<section class="screen" id="scrPrint">
+  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="printSub">Hot off the press</div></div>
+  <div class="printer">
+    <div class="slot"></div>
+    <div class="print-window" id="printWindow"><img id="printImg" alt="your newspaper"></div>
+    <div class="print-status working" id="printStatus">PRINTING…</div>
+  </div>
+  <div class="tone-bar" id="toneBar" style="display:none">
+    <span class="tone-label" id="toneLabel">Tone</span>
+    <button class="tone-btn sel" data-tone="bw"></button>
+    <button class="tone-btn" data-tone="film"></button>
+    <button class="tone-btn" data-tone="color"></button>
+  </div>
+  <div class="result-actions" id="resultActions" style="display:none">
+    <button class="btn" id="dlPng">⬇ PNG</button>
+    <button class="btn" id="dlPdf">⬇ PDF (A4)</button>
+    <button class="btn ghost" id="uploadDrive">☁ Save to Drive</button>
+    <button class="btn ghost" id="retake">↺ Retake</button>
+  </div>
+  <div class="drive-note" id="driveNote"></div>
+</section>
+
+<!-- Drive settings modal -->
+<div class="modal" id="driveModal">
+  <div class="box">
+    <h3>Google Drive Upload</h3>
+    <p>วาง URL ของ Google Apps Script Web App (ดูไฟล์ google-apps-script.gs ประกอบ) — ตั้งครั้งเดียว เครื่องจะจำไว้ให้</p>
+    <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn ghost" id="closeModal">Close</button>
+      <button class="btn" id="saveGas">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- hidden A4 stage -->
+<div id="paperStage"><div class="paper" id="paper"></div></div>
+<canvas id="grab" style="display:none"></canvas>
+
+<script>
+/* =================== CONTENT (4 languages) =================== */
+const TODAY = new Date();
+const L = {
+th:{
+  ui:{layoutStep:'ขั้นที่ 2 — เลือกเลย์เอาต์', layoutSub:'เลือกหน้าหนึ่งของคุณ', camSub:'มองกล้องแล้วยิ้ม!', ready:'พร้อมแล้วกด Start ได้เลย', next:'เตรียมตัว… รูปถัดไป!', done:'ครบแล้ว! กำลังพิมพ์…', printing:'กำลังพิมพ์…', printed:'พิมพ์เสร็จแล้ว! ดาวน์โหลดได้เลย', uploading:'กำลังอัปโหลดเข้า Drive…', uploaded:'✅ บันทึกลง Google Drive แล้ว', uploadFail:'❌ อัปโหลดไม่สำเร็จ — เช็ค URL ในตั้งค่า (⚙)', noGas:'ยังไม่ได้ตั้งค่า Drive — กด ⚙ มุมขวาบนก่อนนะ'},
+  date:()=>TODAY.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
+  masthead:'Nitirat MD Party', edition:'ฉบับพิเศษ วันเกิดเอ็มดี', price:'ฉบับละความสุข',
+  l1:{head:'คุณคือตัวเอกของเรื่องนี้', sub:'ช่วงเวลานี้เป็นของคุณ — ที่นี่ ตอนนี้',
+      body:['ไม่ใช่แค่ฉากหลัง ไม่ใช่แค่ช่วงเวลาหนึ่ง แต่นี่คือเรื่องราวของคุณ ทุกเสียงหัวเราะ ทุกสายตา ทุกอย่างเล็ก ๆ ที่เกิดขึ้นในค่ำคืนนี้ กลายเป็นความทรงจำที่มีค่าโดยไม่ต้องพยายาม','ในวันพิเศษของเอ็มดี เราไม่ได้แค่มาร่วมงาน — เรามาเป็นส่วนหนึ่งของเรื่องราวเดียวกัน และภาพนี้คือหลักฐานว่าเราอยู่ตรงนี้ด้วยกันจริง ๆ'],
+      box:'ช่วงเวลาแสนหวาน', boxSub:'เพราะสุดท้ายแล้ว ภาพที่ดีที่สุดคือภาพที่เราเป็นตัวเองที่สุด',
+      cap:['ตัวเอกประจำฉบับนี้','แขกรับเชิญสุดพิเศษ','อีกหนึ่งความทรงจำ'], footer:'เป็นเจ้าของเรื่องราว ★ ไล่ตามความฝัน ★ ใช้ชีวิตอย่างมีความหมาย'},
+  l2:{head:'ค่ำคืนนี้ทุกรอยยิ้มมีเรื่องเล่า', sub:'สัมผัสช่วงเวลาดี ๆ ในงานวันเกิดเอ็มดี ทีละก้าว ทีละภาพ',
+      col:[['สายน้ำไม่เคยหยุดเล่าเรื่อง','เช่นเดียวกับค่ำคืนนี้ที่เต็มไปด้วยเสียงหัวเราะและบทสนทนา ทุกมุมของงานมีเรื่องราวรอให้ค้นพบ ภาพนี้คือหน้าหนึ่งของบันทึกที่เราเขียนร่วมกัน'],['เช็คอิน · สำรวจ · จดจำ','การมาร่วมงานครั้งนี้เป็นมากกว่าการเดินทาง มันคือคอลเลกชันของช่วงเวลาที่อยากเก็บไว้ตลอดไป ตั้งแต่คำอวยพรแรกจนถึงเค้กก้อนสุดท้าย'],['เดินช้า ๆ รู้สึกลึก ๆ จดจำตลอดไป','ขอให้ปีนี้ของเอ็มดีเต็มไปด้วยสุขภาพที่ดี ความสำเร็จ และรอยยิ้มแบบในภาพนี้ ตลอดทั้งปี']],
+      cap:'ภาพประวัติศาสตร์ประจำค่ำคืนนี้', footer:'สุขสันต์วันเกิดเอ็มดี ★ จากพวกเราทุกคน'},
+  l3:{head:'Birthday Post', sub:'หนังสือพิมพ์ฉบับวันเกิดสุดพิเศษ', about:'เกี่ยวกับค่ำคืนนี้',
+      aboutBody:'"ค่ำคืนแห่งการเฉลิมฉลอง เสียงหัวเราะ และคำอวยพรจากใจ — ขอบคุณที่มาเป็นส่วนหนึ่งของวันพิเศษนี้ด้วยกัน ทุกภาพ ทุกรอยยิ้ม คือของขวัญที่ดีที่สุด"',
+      know:'บันทึกความทรงจำ', knowBody:['พบกันที่งานวันเกิดเอ็มดี','เสียงหัวเราะดังกว่าเสียงเพลง','ภาพนี้ถ่ายด้วยความสุขล้วน ๆ','เก็บไว้ดูอีกสิบปีก็ยังยิ้ม'],
+      chapter:'บทที่', cap:['ภาพแรกแห่งค่ำคืน','อีกหนึ่งช็อตประทับใจ'], footer:'ฉบับพิเศษ ★ พิมพ์ด้วยความสุข'}
+},
+en:{
+  ui:{layoutStep:'Step 2 — Choose Layout', layoutSub:'Choose your front page', camSub:'Look at the camera!', ready:'Ready — press Start!', next:'Get ready… next shot!', done:'All done! Printing…', printing:'PRINTING…', printed:'Fresh off the press — download below', uploading:'Uploading to Drive…', uploaded:'✅ Saved to Google Drive', uploadFail:'❌ Upload failed — check URL in settings (⚙)', noGas:'Drive not set up yet — press ⚙ top-right first'},
+  date:()=>TODAY.toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
+  masthead:'Nitirat MD Party', edition:'MD Birthday Special Edition', price:'Priceless',
+  l1:{head:'You Are The Main Characters', sub:'Right here, right now, this moment belongs to you',
+      body:['Not just a background, not just a moment — this is your story, and you are the reason it feels alive. Every laugh, every glance, every little thing tonight turns into something worth remembering.','On MD\'s special day we are not just guests — we are part of the same story, and this picture is proof that we were truly here, together.'],
+      box:'Sweet Moment', boxSub:'Because in the end, the best pictures are the ones where we are simply ourselves.',
+      cap:['The main characters of this edition','Special guest appearance','One more for the memory'], footer:'Own your story ★ Chase your dream ★ Live with purpose'},
+  l2:{head:'Where Every Smile Tells A Story', sub:'Experience the timeless charm of MD\'s birthday night, one step at a time',
+      col:[['The Night Never Stops Telling Stories','Like a river, tonight flows with laughter and conversation. Every corner of this party holds a story waiting to be found — this photo is one page of the record we are writing together.'],['Check In · Explore · Remember','Being here is more than attending a party. It is a collection of moments worth keeping forever, from the first toast to the last slice of cake.'],['Walk Slowly. Feel Deeply. Remember Forever.','May this year bring MD great health, great success, and smiles exactly like the ones in this picture — all year long.']],
+      cap:'The historic photograph of the evening', footer:'Happy Birthday MD ★ From all of us'},
+  l3:{head:'Birthday Post', sub:'Special Birthday Newspaper', about:'About Tonight',
+      aboutBody:'"A night of celebration, laughter and heartfelt wishes — thank you for being part of this special day. Every photo, every smile, is the best gift of all."',
+      know:'Know Us More', knowBody:['Met at MD\'s birthday party','Laughter louder than the music','This photo contains pure joy','Still smiling ten years from now'],
+      chapter:'Chapter', cap:['First shot of the night','One more unforgettable frame'], footer:'Special Edition ★ Printed with happiness'}
+},
+zh:{
+  ui:{layoutStep:'第二步 — 选择版面', layoutSub:'选择你的头版', camSub:'看镜头，笑一个！', ready:'准备好了就按开始！', next:'准备好…下一张！', done:'拍完了！正在打印…', printing:'打印中…', printed:'新鲜出炉 — 请下载', uploading:'正在上传到云端硬盘…', uploaded:'✅ 已保存到 Google Drive', uploadFail:'❌ 上传失败 — 请检查设置 (⚙)', noGas:'尚未设置 Drive — 请先点右上角 ⚙'},
+  date:()=>TODAY.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
+  masthead:'Nitirat MD Party', edition:'MD 生日特刊', price:'无价',
+  l1:{head:'你就是今晚的主角', sub:'此时此刻，这一瞬间属于你',
+      body:['这不只是背景，也不只是一个瞬间——这是你的故事。今晚的每一次欢笑、每一个眼神、每一件小事，都会成为值得铭记的回忆。','在 MD 的特别日子里，我们不只是宾客——我们是同一个故事的一部分，而这张照片就是我们真正在一起的证明。'],
+      box:'甜蜜时刻', boxSub:'因为到最后，最好的照片永远是我们做自己的那一张。',
+      cap:['本期主角','特别嘉宾登场','再来一张回忆'], footer:'书写自己的故事 ★ 追逐梦想 ★ 用心生活'},
+  l2:{head:'每一个微笑都有故事', sub:'一步一步，感受 MD 生日之夜的美好时光',
+      col:[['夜晚从未停止讲述故事','今晚如河流般流淌着欢笑与交谈。派对的每个角落都藏着等待被发现的故事——这张照片是我们共同书写的一页。'],['签到 · 探索 · 铭记','来到这里不只是参加派对，而是收藏一段段值得永远珍藏的时光，从第一杯祝酒到最后一块蛋糕。'],['慢慢走，深深感受，永远铭记','愿 MD 新的一岁健康顺遂、事业有成，笑容如照片中一样灿烂——一整年都是如此。']],
+      cap:'今晚的历史性照片', footer:'MD 生日快乐 ★ 我们全体敬上'},
+  l3:{head:'Birthday Post', sub:'生日特别号', about:'关于今晚',
+      aboutBody:'"一个充满庆祝、欢笑与真挚祝福的夜晚——感谢你成为这个特别日子的一部分。每张照片、每个微笑，都是最好的礼物。"',
+      know:'更多回忆', knowBody:['相聚在 MD 的生日派对','笑声比音乐还响亮','这张照片装满了快乐','十年后再看依然微笑'],
+      chapter:'章节', cap:['今晚的第一张','再来一张难忘瞬间'], footer:'特别版 ★ 用幸福印刷'}
+},
+ko:{
+  ui:{layoutStep:'2단계 — 레이아웃 선택', layoutSub:'당신의 1면을 선택하세요', camSub:'카메라를 보고 웃어주세요!', ready:'준비되면 시작을 눌러주세요!', next:'준비하세요… 다음 컷!', next:'준비하세요… 다음 컷!', done:'촬영 완료! 인쇄 중…', printing:'인쇄 중…', printed:'따끈따끈한 신문 완성 — 다운로드하세요', uploading:'드라이브에 업로드 중…', uploaded:'✅ Google Drive에 저장되었습니다', uploadFail:'❌ 업로드 실패 — 설정(⚙)에서 URL을 확인하세요', noGas:'Drive 설정이 안 되어 있어요 — 우측 상단 ⚙ 를 먼저 눌러주세요'},
+  date:()=>TODAY.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
+  masthead:'Nitirat MD Party', edition:'MD 생일 특별판', price:'값을 매길 수 없음',
+  l1:{head:'오늘 밤의 주인공은 바로 당신', sub:'바로 지금, 이 순간은 당신의 것',
+      body:['단순한 배경도, 스쳐가는 순간도 아닙니다 — 이것은 당신의 이야기입니다. 오늘 밤의 모든 웃음, 모든 눈빛, 사소한 순간들이 기억할 가치가 있는 추억이 됩니다.','MD의 특별한 날, 우리는 단순한 손님이 아니라 같은 이야기의 일부입니다. 이 사진이 우리가 함께였다는 증거입니다.'],
+      box:'달콤한 순간', boxSub:'결국 가장 좋은 사진은 우리가 가장 우리다운 모습일 때니까요.',
+      cap:['이번 호의 주인공','스페셜 게스트 등장','추억을 위한 한 컷 더'], footer:'나의 이야기를 살다 ★ 꿈을 좇다 ★ 의미 있게 살다'},
+  l2:{head:'모든 미소에는 이야기가 있다', sub:'MD의 생일 밤, 그 특별한 순간을 한 걸음씩',
+      col:[['밤은 이야기를 멈추지 않는다','강물처럼 오늘 밤도 웃음과 대화로 흐릅니다. 파티의 모든 구석에 발견되길 기다리는 이야기가 있고, 이 사진은 우리가 함께 쓰는 기록의 한 페이지입니다.'],['체크인 · 탐험 · 기억','이곳에 온 것은 단순한 참석이 아닙니다. 첫 건배부터 마지막 케이크 한 조각까지, 영원히 간직할 순간들의 컬렉션입니다.'],['천천히 걷고, 깊이 느끼고, 영원히 기억하기','올해 MD에게 건강과 성공, 그리고 이 사진 속 같은 미소가 일 년 내내 가득하길 바랍니다.']],
+      cap:'오늘 밤의 역사적인 한 장', footer:'MD 생일 축하합니다 ★ 우리 모두가'},
+  l3:{head:'Birthday Post', sub:'생일 기념 특별 신문', about:'오늘 밤 이야기',
+      aboutBody:'"축하와 웃음, 진심 어린 축복이 가득한 밤 — 이 특별한 날의 일부가 되어주셔서 감사합니다. 모든 사진, 모든 미소가 최고의 선물입니다."',
+      know:'추억 기록', knowBody:['MD 생일 파티에서 만남','음악보다 큰 웃음소리','이 사진엔 순수한 기쁨만','10년 뒤에 봐도 미소가'],
+      chapter:'챕터', cap:['오늘 밤 첫 번째 컷','잊지 못할 한 컷 더'], footer:'특별판 ★ 행복으로 인쇄함'}
+}
+};
+
+const SHOTS = {1:3, 2:1, 3:2};
+
+/* =================== STATE =================== */
+let lang='en', layout=1, photos=[], stream=null, finalCanvas=null;
+
+const $=id=>document.getElementById(id);
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');};
+
+/* =================== NAV =================== */
+document.querySelectorAll('.lang-card').forEach(c=>c.onclick=()=>{
+  lang=c.dataset.lang;
+  $('layoutStep').textContent=L[lang].ui.layoutStep;
+  $('layoutSub').textContent=L[lang].ui.layoutSub;
+  show('scrLayout');
+});
+document.querySelectorAll('.layout-card').forEach(c=>c.onclick=async()=>{
+  layout=+c.dataset.layout;
+  $('camSub').textContent=L[lang].ui.camSub;
+  $('camMsg').textContent=L[lang].ui.ready;
+  buildDots();
+  show('scrCam');
+  await startCam();
+});
+$('backLang').onclick=()=>show('scrLang');
+$('backLayout').onclick=()=>{stopCam();show('scrLayout');};
+
+/* =================== CAMERA =================== */
+async function startCam(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:960},facingMode:'user'},audio:false});
+    $('video').srcObject=stream;
+  }catch(e){ $('camMsg').textContent='⚠ Camera permission needed / กรุณาอนุญาตกล้อง'; }
+}
+function stopCam(){ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} }
+
+function buildDots(){
+  const n=SHOTS[layout], d=$('shotDots'); d.innerHTML='';
+  for(let i=0;i<n;i++){const s=document.createElement('div');s.className='dot';d.appendChild(s);}
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+$('startShoot').onclick=async()=>{
+  $('startShoot').disabled=true; photos=[];
+  const n=SHOTS[layout];
+  for(let i=0;i<n;i++){
+    $('camMsg').textContent=(i>0?L[lang].ui.next:'')+`  ${i+1}/${n}`;
+    for(let c=3;c>=1;c--){ $('countOverlay').textContent=c; await wait(1000); }
+    $('countOverlay').textContent='';
+    $('flash').classList.add('on'); capture(); await wait(180); $('flash').classList.remove('on');
+    document.querySelectorAll('.dot')[i].classList.add('done');
+    await wait(700);
+  }
+  $('camMsg').textContent=L[lang].ui.done;
+  stopCam(); $('startShoot').disabled=false;
+  goPrint();
+};
+
+function capture(){
+  const v=$('video'), c=$('grab');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  const ctx=c.getContext('2d');
+  ctx.translate(c.width,0); ctx.scale(-1,1);            // mirror = selfie style
+  ctx.drawImage(v,0,0);
+  ctx.setTransform(1,0,0,1,0,0);
+  photos.push(c.toDataURL('image/jpeg',0.94));          // เก็บสีต้นฉบับ ค่อยย้อมโทนทีหลัง
+}
+
+/* =================== TONES =================== */
+const clamp=x=>x<0?0:x>255?255:x;
+const TONES={
+  bw:{label:{th:'ขาวดำ',en:'B&W',zh:'黑白',ko:'흑백'},
+    fn:(r,g,b)=>{const y=r*0.299+g*0.587+b*0.114;const v=clamp((y-128)*1.08+132);return[v,v,v];}},
+  film:{label:{th:'ฟิล์มนัว',en:'Film',zh:'胶片',ko:'필름'},
+    fn:(r,g,b)=>{
+      const y=r*0.299+g*0.587+b*0.114;
+      const f=(y-128)*0.82+128;                          // ลด contrast ให้นัว
+      return[clamp(f*1.02+34),clamp(f*0.94+26),clamp(f*0.72+18)]; // ย้อมเหลืองอุ่น + ยกเงาให้ซีด
+    }},
+  color:{label:{th:'สีปกติ',en:'Color',zh:'彩色',ko:'컬러'},
+    fn:(r,g,b)=>[clamp((r-128)*1.04+130),clamp((g-128)*1.04+129),clamp((b-128)*1.04+124)]}
+};
+let tone='bw', tonedPhotos=[];
+
+function applyTone(dataURL,toneKey){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width;c.height=img.height;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0);
+      const id=ctx.getImageData(0,0,c.width,c.height),d=id.data,fn=TONES[toneKey].fn;
+      for(let i=0;i<d.length;i+=4){const[r,g,b]=fn(d[i],d[i+1],d[i+2]);d[i]=r;d[i+1]=g;d[i+2]=b;}
+      ctx.putImageData(id,0,0);
+      res(c.toDataURL('image/jpeg',0.92));
+    };
+    img.src=dataURL;
+  });
+}
+async function processTones(){ tonedPhotos=await Promise.all(photos.map(p=>applyTone(p,tone))); }
+
+/* =================== BUILD PAPER =================== */
+function buildPaper(){
+  const t=L[lang], p=$('paper');
+  const ph=tonedPhotos.length?tonedPhotos:photos;
+  const top=`
+    <div class="p-topline"><span>${t.edition}</span><span>${t.date()}</span><span>${t.price}</span></div>
+    <hr class="p-rule thick">
+    <div class="p-masthead">${t.masthead}</div>
+    <hr class="p-rule dbl">`;
+  if(layout===1){
+    const c=t.l1;
+    p.innerHTML=`${top}
+      <div class="p-headline" style="font-size:40px;margin:12px 0 4px">${c.head}</div>
+      <div style="text-align:center;font-style:italic;font-size:14px;margin-bottom:12px">${c.sub}</div>
+      <hr class="p-rule">
+      <div style="display:flex;gap:16px;margin-top:14px">
+        <div style="flex:1.35">
+          <div class="p-photo" style="height:430px"><img src="${ph[0]}"></div>
+          <div class="p-caption">${c.cap[0]}</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+          <div class="p-body">${c.body.map(x=>`<p>${x}</p>`).join('')}</div>
+          <div class="p-photo" style="height:180px"><img src="${ph[1]}"></div>
+          <div class="p-caption">${c.cap[1]}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:18px">
+        <div style="flex:1"><div class="p-photo" style="height:225px"><img src="${ph[2]}"></div><div class="p-caption">${c.cap[2]}</div></div>
+        <div style="flex:1.1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+          <div class="p-blackbox"><div class="bb-t">${c.box}</div><div class="bb-s">${c.boxSub}</div></div>
+        </div>
+      </div>
+      <div class="p-footer">${c.footer}</div>`;
+  }
+  if(layout===2){
+    const c=t.l2;
+    p.innerHTML=`${top}
+      <div class="p-headline" style="font-size:34px;margin:10px 0 2px">${c.head}</div>
+      <div style="text-align:center;font-size:14px;font-weight:700;border-top:1.5px solid #141210;border-bottom:1.5px solid #141210;padding:5px 0;margin:8px 0 14px">${c.sub}</div>
+      <div class="p-photo" style="height:520px"><img src="${ph[0]}"></div>
+      <div class="p-caption" style="margin-bottom:12px">${c.cap}</div>
+      <hr class="p-rule">
+      <div style="display:flex;gap:18px;margin-top:12px">
+        ${c.col.map(([h,b])=>`
+          <div style="flex:1">
+            <div style="font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:14px;text-align:center;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:6px">${h}</div>
+            <div class="p-body">${b}</div>
+          </div>`).join('')}
+      </div>
+      <div class="p-footer">${c.footer}</div>`;
+  }
+  if(layout===3){
+    const c=t.l3;
+    const day=TODAY.getDate(), mon=TODAY.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();
+    p.innerHTML=`
+      <div class="p-topline"><span>${t.edition}</span><span></span><span>${t.price}</span></div>
+      <div class="p-masthead" style="font-size:56px">${t.masthead}</div>
+      <div class="p-tagline">✦ ${c.sub} ✦</div>
+      <hr class="p-rule dbl">
+      <div style="display:flex;gap:18px;margin-top:16px">
+        <div style="flex:1">
+          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.about}</div>
+          <div class="p-body" style="font-size:13px">${c.aboutBody}</div>
+          <div class="p-datebox" style="margin-top:16px">
+            <div style="font-size:34px;font-weight:700">${day}</div>
+            <div style="letter-spacing:3px">${mon}</div>
+            <hr class="p-rule" style="margin:6px 0">
+            <div style="font-size:12px">${c.chapter} ${TODAY.getFullYear()}</div>
+          </div>
+        </div>
+        <div style="flex:1.3">
+          <div class="p-photo" style="height:420px"><img src="${ph[0]}"></div>
+          <div class="p-caption">${c.cap[0]}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:18px">
+        <div style="flex:1.2">
+          <div class="p-photo" style="height:300px"><img src="${ph[1]}"></div>
+          <div class="p-caption">${c.cap[1]}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.know}</div>
+          <div style="font-size:13px">${c.knowBody.map(x=>`<p style="margin-bottom:8px;border-bottom:1px dotted #141210;padding-bottom:6px">◦ ${x}</p>`).join('')}</div>
+        </div>
+      </div>
+      <div class="p-footer">${c.footer}</div>`;
+  }
+}
+
+/* =================== PRINT & EXPORT =================== */
+async function renderPaper(){
+  buildPaper();
+  await document.fonts.ready;
+  await wait(200);
+  finalCanvas=await html2canvas($('paper'),{scale:3,useCORS:true,backgroundColor:'#f6f2e7'});
+  $('printImg').src=finalCanvas.toDataURL('image/png');
+}
+
+async function goPrint(){
+  $('printSub').textContent='Hot off the press';
+  $('printStatus').textContent=L[lang].ui.printing;
+  $('printStatus').classList.add('working');
+  $('resultActions').style.display='none';
+  $('toneBar').style.display='none';
+  $('printWindow').style.height='0';
+  show('scrPrint');
+  tone='bw';
+  document.querySelectorAll('.tone-btn').forEach(b=>{
+    b.classList.toggle('sel',b.dataset.tone===tone);
+    b.textContent=TONES[b.dataset.tone].label[lang];
+  });
+  await processTones();
+  await renderPaper();
+  await wait(200);
+  // paper slides out of the slot
+  const win=$('printWindow');
+  win.style.height=(win.offsetWidth*1123/794)+'px';
+  setTimeout(()=>{
+    $('printStatus').classList.remove('working');
+    $('printStatus').textContent=L[lang].ui.printed;
+    $('toneBar').style.display='flex';
+    $('resultActions').style.display='flex';
+  },3300);
+}
+
+document.querySelectorAll('.tone-btn').forEach(btn=>btn.onclick=async()=>{
+  if(btn.dataset.tone===tone)return;
+  tone=btn.dataset.tone;
+  document.querySelectorAll('.tone-btn').forEach(b=>{b.classList.toggle('sel',b===btn);b.disabled=true;});
+  $('printStatus').textContent=L[lang].ui.printing;
+  $('printStatus').classList.add('working');
+  await processTones();
+  await renderPaper();
+  $('printStatus').classList.remove('working');
+  $('printStatus').textContent=L[lang].ui.printed;
+  document.querySelectorAll('.tone-btn').forEach(b=>b.disabled=false);
+});
+
+function fileStem(){
+  const d=TODAY.toISOString().slice(0,10);
+  return `Nitirat-MD-Party_${d}_${Date.now().toString().slice(-5)}`;
+}
+$('dlPng').onclick=()=>{
+  const a=document.createElement('a');
+  a.download=fileStem()+'.png';
+  a.href=finalCanvas.toDataURL('image/png');
+  a.click();
+};
+$('dlPdf').onclick=()=>{
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  pdf.addImage(finalCanvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
+  pdf.save(fileStem()+'.pdf');
+};
+$('retake').onclick=async()=>{
+  photos=[]; buildDots();
+  $('camMsg').textContent=L[lang].ui.ready;
+  show('scrCam'); await startCam();
+};
+
+/* =================== GOOGLE DRIVE =================== */
+$('gearBtn').onclick=()=>{ $('gasUrl').value=localStorage.getItem('gasUrl')||''; $('driveModal').classList.add('open'); };
+$('closeModal').onclick=()=>$('driveModal').classList.remove('open');
+$('saveGas').onclick=()=>{ localStorage.setItem('gasUrl',$('gasUrl').value.trim()); $('driveModal').classList.remove('open'); };
+
+$('uploadDrive').onclick=async()=>{
+  const url=localStorage.getItem('gasUrl');
+  if(!url){ $('driveNote').textContent=L[lang].ui.noGas; return; }
+  $('driveNote').textContent=L[lang].ui.uploading;
+  try{
+    const png=finalCanvas.toDataURL('image/png').split(',')[1];
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({filename:fileStem()+'.png',mimeType:'image/png',data:png})});
+    $('driveNote').textContent=L[lang].ui.uploaded;
+  }catch(e){ $('driveNote').textContent=L[lang].ui.uploadFail; }
+};
+</script>
+</body>
+</html>
