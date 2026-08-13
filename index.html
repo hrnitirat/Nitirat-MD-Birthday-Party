@@ -8,37 +8,66 @@
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@400;700;900&family=Oswald:wght@400;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Thai:wght@400;600;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --ink:#181512;
   --paper:#f4efe3;
-  --paper-shadow:#d8d2c0;
   --room:#141210;
-  --room-2:#211d19;
-  --accent:#c9a227;
+  --room-2:#2a2118;
+  --wood-1:#8a5a33; --wood-2:#95613a; --wood-dark:#4a2e15;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
 body{
-  background:radial-gradient(1200px 700px at 50% -10%, var(--room-2), var(--room) 70%);
+  background:radial-gradient(1400px 800px at 50% -10%, var(--room-2), var(--room) 72%);
   color:var(--paper);
   font-family:'Noto Serif','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif;
-  min-height:100vh;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;
 }
-.screen{display:none;max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+
+/* ============ THE CABINET (ตู้ photo booth) ============ */
+.cabinet{
+  width:min(1240px,100%);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.22)),
+    repeating-linear-gradient(92deg, var(--wood-1) 0 9px, var(--wood-2) 9px 20px, var(--wood-1) 20px 31px);
+  border:12px solid var(--wood-dark);
+  border-radius:10px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.15), inset 0 -6px 20px rgba(0,0,0,.35);
+  padding:22px 26px 20px;
+  position:relative;
+}
+.tape-row{text-align:center;margin:6px 0 14px}
+.tape{
+  display:inline-block;background:#f6f2e7;color:#141210;
+  font-family:'Oswald','Noto Sans Thai',sans-serif;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  font-size:14px;padding:7px 24px;transform:rotate(-.5deg);
+  box-shadow:0 2px 5px rgba(0,0,0,.45);
+}
+.tape.b{transform:rotate(.4deg)}
+.screen-window{
+  background:#0d0c0a;border:8px solid #211609;border-radius:16px;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.12);
+  padding:26px 22px 34px;min-height:560px;position:relative;overflow:hidden;
+}
+.print-slot-deco{
+  margin:16px auto 2px;width:340px;height:16px;background:#171008;border-radius:8px;
+  box-shadow:inset 0 3px 6px #000, 0 1px 0 rgba(255,255,255,.18);
+}
+.coin-note{text-align:center;font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.5;margin-top:8px;color:#f6f2e7}
+
+.screen{display:none;max-width:1060px;margin:0 auto}
 .screen.active{display:block}
 
-/* ---------- header ---------- */
-.masthead{
-  text-align:center;border-top:3px double var(--paper);border-bottom:3px double var(--paper);
-  padding:14px 0;margin-bottom:26px;
-}
-.masthead h1{font-family:'UnifrakturMaguntia',serif;font-size:clamp(30px,6vw,54px);letter-spacing:1px}
-.masthead .sub{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:12px;text-transform:uppercase;opacity:.75;margin-top:4px}
-
-/* ---------- buttons ---------- */
+/* ---------- shared type ---------- */
+.masthead{text-align:center;border-top:3px double var(--paper);border-bottom:3px double var(--paper);padding:10px 0;margin-bottom:18px}
+.masthead h1{font-family:'UnifrakturMaguntia',serif;font-size:clamp(28px,4.6vw,48px);letter-spacing:1px}
+.masthead .sub{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:11px;text-transform:uppercase;opacity:.75;margin-top:3px}
+.step-label{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:3px;font-size:12px;text-transform:uppercase;opacity:.65;text-align:center;margin:4px 0 18px}
 .btn{
   font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;text-transform:uppercase;
-  background:var(--paper);color:var(--ink);border:none;padding:13px 26px;font-size:14px;
+  background:var(--paper);color:var(--ink);padding:13px 26px;font-size:14px;
   cursor:pointer;transition:.15s;border:2px solid var(--paper);
 }
 .btn:hover{background:transparent;color:var(--paper)}
@@ -47,73 +76,94 @@ body{
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .center{text-align:center}
 
-/* ---------- language ---------- */
-.lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:820px;margin:0 auto}
-.lang-card{
-  border:1px solid rgba(244,239,227,.35);padding:26px 10px;text-align:center;cursor:pointer;transition:.15s;
-  background:rgba(244,239,227,.03);
-}
-.lang-card:hover,.lang-card.sel{border-color:var(--paper);background:rgba(244,239,227,.1)}
-.lang-card .big{font-size:30px;font-weight:700;font-family:'Playfair Display','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif}
-.lang-card .small{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.65;margin-top:8px}
-.step-label{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:12px;text-transform:uppercase;opacity:.6;text-align:center;margin:8px 0 20px}
+/* ---------- attract ---------- */
+#scrAttract{text-align:center;padding-top:14px}
+.attract-orn{font-size:20px;letter-spacing:12px;opacity:.7;margin:6px 0}
+.attract-mast{font-family:'UnifrakturMaguntia',serif;font-size:clamp(46px,7vw,84px);line-height:1.05;margin:8px 0 2px}
+.attract-sub{font-family:'Oswald',sans-serif;letter-spacing:6px;text-transform:uppercase;font-size:clamp(12px,1.6vw,16px);opacity:.85}
+.attract-cam{margin:22px auto 10px;width:130px;opacity:.95}
+.attract-langs{font-family:'Oswald',sans-serif;letter-spacing:4px;font-size:13px;opacity:.6;margin:8px 0 20px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.97)}}
+.tap-start{animation:pulse 1.6s infinite;font-size:17px;padding:16px 40px}
 
-/* ---------- layouts ---------- */
-.layout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;max-width:900px;margin:0 auto}
-.layout-card{border:1px solid rgba(244,239,227,.35);cursor:pointer;transition:.15s;background:rgba(244,239,227,.03);padding:14px}
-.layout-card:hover,.layout-card.sel{border-color:var(--paper);background:rgba(244,239,227,.1)}
-.layout-card .thumb{background:var(--paper);aspect-ratio:210/297;padding:7%;display:flex;flex-direction:column;gap:4%}
-.layout-card .t-head{height:9%;background:var(--ink)}
+/* ---------- layout choose ---------- */
+.layout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:880px;margin:0 auto}
+.layout-card{border:1px solid rgba(244,239,227,.35);cursor:pointer;transition:.15s;background:rgba(244,239,227,.03);padding:12px}
+.layout-card:hover{border-color:var(--paper);background:rgba(244,239,227,.1)}
+.layout-card .thumb{background:var(--paper);aspect-ratio:210/260;padding:7%;display:flex;flex-direction:column;gap:4%}
+.layout-card .t-head{height:10%;background:var(--ink)}
 .layout-card .t-row{display:flex;gap:4%;flex:1}
 .layout-card .t-photo{background:#8b857a;flex:1}
 .layout-card .t-col{display:flex;flex-direction:column;gap:6%;flex:1}
 .layout-card .t-text{background:#c9c2ae;flex:1}
-.layout-card .name{font-family:'Oswald',sans-serif;letter-spacing:2px;font-size:13px;text-transform:uppercase;text-align:center;margin-top:12px}
-.layout-card .shots{text-align:center;font-size:12px;opacity:.6;margin-top:4px}
+.layout-card .name{font-family:'Oswald',sans-serif;letter-spacing:2px;font-size:13px;text-transform:uppercase;text-align:center;margin-top:10px}
+.layout-card .shots{text-align:center;font-size:13px;opacity:.65;margin-top:3px}
 
-/* ---------- camera ---------- */
-.cam-wrap{position:relative;max-width:720px;margin:0 auto;border:1px solid rgba(244,239,227,.4);background:#000}
-video{width:100%;display:block;transform:scaleX(-1)}
-.count-overlay{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:'Playfair Display',serif;font-weight:900;font-size:140px;color:#fff;
-  text-shadow:0 0 40px rgba(0,0,0,.8);pointer-events:none;
-}
-.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .1s}
-.flash.on{opacity:.9}
-.shot-dots{display:flex;gap:10px;justify-content:center;margin:16px 0}
+/* ---------- language ---------- */
+.lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;max-width:800px;margin:0 auto}
+.lang-card{border:1px solid rgba(244,239,227,.35);padding:24px 10px;text-align:center;cursor:pointer;transition:.15s;background:rgba(244,239,227,.03)}
+.lang-card:hover{border-color:var(--paper);background:rgba(244,239,227,.1)}
+.lang-card .big{font-size:28px;font-weight:700;font-family:'Playfair Display','Noto Sans Thai','Noto Serif KR','Noto Serif SC',serif}
+.lang-card .small{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.65;margin-top:6px}
+
+/* ---------- camera / live paper ---------- */
+.live-area{display:flex;justify-content:center}
+.live-frame{position:relative;box-shadow:0 18px 50px rgba(0,0,0,.65)}
+.live-frame .paper{position:absolute;left:0;top:0;transform-origin:top left}
+.shot-dots{display:flex;gap:10px;justify-content:center;margin:14px 0 4px}
 .dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--paper);opacity:.5}
 .dot.done{background:var(--paper);opacity:1}
-.cam-msg{text-align:center;font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;margin-top:14px;min-height:24px}
+.cam-msg{text-align:center;font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;margin-top:8px;min-height:22px}
 
-/* ---------- printing ---------- */
-.printer{max-width:520px;margin:30px auto;text-align:center}
-.printer .slot{height:14px;background:#000;border:1px solid rgba(244,239,227,.5);border-radius:7px;margin-bottom:0;position:relative;z-index:2}
+/* live slot bits (อยู่บนกระดาษ) */
+.p-slot{position:relative}
+.p-slot video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+.p-slot.pending{background:#ddd6c2;display:flex;align-items:center;justify-content:center}
+.p-slot.pending::after{content:'📷';font-size:34px;opacity:.35}
+.p-slot.live{outline:4px dashed #141210;outline-offset:-4px}
+.slot-count{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:900;font-size:90px;color:#fff;
+  text-shadow:0 0 30px rgba(0,0,0,.85);pointer-events:none;z-index:5;
+}
+.slot-flash{position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .1s;pointer-events:none;z-index:6}
+.slot-flash.on{opacity:.92}
+
+/* ---------- printing / result ---------- */
+.printer{max-width:480px;margin:8px auto;text-align:center}
+.printer .slot{height:14px;background:#000;border:1px solid rgba(244,239,227,.5);border-radius:7px;position:relative;z-index:2}
 .print-window{overflow:hidden;height:0;transition:height 3.2s cubic-bezier(.25,.7,.3,1)}
 .print-window img{width:100%;display:block;box-shadow:0 20px 50px rgba(0,0,0,.6)}
-.print-status{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:13px;opacity:.7;margin:18px 0}
+.print-status{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:13px;opacity:.75;margin:14px 0;text-align:center}
 @keyframes blink{50%{opacity:.2}}
 .print-status.working{animation:blink 1s infinite}
-
-/* ---------- result ---------- */
-.tone-bar{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:22px;flex-wrap:wrap}
-.tone-label{font-family:'Oswald',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:12px;opacity:.6;margin-right:6px}
+.result-wrap{display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.result-side{min-width:280px;max-width:360px}
+.tone-bar{display:flex;gap:10px;justify-content:center;align-items:center;margin:14px 0;flex-wrap:wrap}
+.tone-label{font-family:'Oswald',sans-serif;letter-spacing:3px;text-transform:uppercase;font-size:12px;opacity:.6;margin-right:4px}
 .tone-btn{font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:1px;background:transparent;color:var(--paper);border:1px solid rgba(244,239,227,.4);padding:8px 18px;font-size:13px;cursor:pointer;transition:.15s}
 .tone-btn:hover{border-color:var(--paper)}
 .tone-btn.sel{background:var(--paper);color:var(--ink);border-color:var(--paper)}
 .tone-btn:disabled{opacity:.4;cursor:wait}
-.result-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px}
-.drive-note{font-size:12px;opacity:.55;text-align:center;margin-top:14px}
-.gear{position:fixed;top:14px;right:14px;background:none;border:1px solid rgba(244,239,227,.4);color:var(--paper);padding:6px 10px;cursor:pointer;font-size:16px;z-index:50}
+.qr-area{display:flex;gap:20px;justify-content:center;margin:14px 0;flex-wrap:wrap;min-height:20px}
+.qr-card{background:#f6f2e7;color:#141210;padding:14px 14px 10px;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.qr-card .qr-box{width:170px;height:170px;background:#fff;padding:6px;display:flex;align-items:center;justify-content:center}
+.qr-card .qr-box img,.qr-card .qr-box canvas{width:158px!important;height:158px!important}
+.qr-card .qr-name{font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:2px;font-size:13px;margin-top:8px;text-transform:uppercase}
+.qr-title{text-align:center;font-family:'Oswald','Noto Sans Thai',sans-serif;letter-spacing:2px;font-size:15px;margin:6px 0}
+.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.drive-note{font-size:12px;opacity:.6;text-align:center;margin-top:10px;min-height:16px}
+
+.gear{position:fixed;top:12px;right:12px;background:rgba(0,0,0,.4);border:1px solid rgba(244,239,227,.35);color:var(--paper);padding:6px 10px;cursor:pointer;font-size:15px;z-index:50}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:60}
 .modal.open{display:flex}
-.modal .box{background:var(--room-2);border:1px solid rgba(244,239,227,.4);padding:26px;max-width:460px;width:92%}
+.modal .box{background:#2a2118;border:1px solid rgba(244,239,227,.4);padding:26px;max-width:460px;width:92%}
 .modal input{width:100%;padding:10px;margin:12px 0;background:#0d0c0a;border:1px solid rgba(244,239,227,.35);color:var(--paper);font-family:inherit}
 .modal h3{font-family:'Oswald',sans-serif;letter-spacing:2px}
 .modal p{font-size:13px;opacity:.7;margin-top:8px}
 
 /* ============================================================
-   THE PAPER (A4 render target) 794 x 1123 px = A4 @96dpi
+   THE PAPER — A4 render target 794 x 1123 px (A4 @96dpi)
    ============================================================ */
 #paperStage{position:fixed;left:-3000px;top:0}
 .paper{
@@ -129,15 +179,14 @@ video{width:100%;display:block;transform:scaleX(-1)}
 .p-rule.dbl{border-top:1px solid #141210;position:relative;height:5px}
 .p-rule.dbl::after{content:'';position:absolute;left:0;right:0;top:3px;border-top:1px solid #141210}
 .p-topline{display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:5px 0}
-.p-masthead{font-family:'UnifrakturMaguntia',serif;text-align:center;font-size:64px;padding:6px 0 2px}
+.p-masthead{font-family:'UnifrakturMaguntia',serif;text-align:center;font-size:60px;padding:6px 0 2px}
 .p-tagline{text-align:center;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;padding-bottom:8px}
 .p-headline{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;text-align:center;letter-spacing:1px}
-.p-photo{background:#000;overflow:hidden;position:relative}
+.p-photo{background:#ddd6c2;overflow:hidden;position:relative}
 .p-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .p-caption{font-size:10.5px;font-style:italic;text-align:center;padding-top:4px}
-.p-body{font-size:12px;text-align:justify;column-gap:16px}
+.p-body{font-size:12px;text-align:justify}
 .p-body p{margin-bottom:8px;text-indent:1.2em}
-.p-kicker{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;text-align:center;border-top:1.5px solid #141210;border-bottom:1.5px solid #141210;padding:4px 0;margin:10px 0}
 .p-blackbox{background:#141210;color:#f6f2e7;padding:14px;text-align:center}
 .p-blackbox .bb-t{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:18px;letter-spacing:1px}
 .p-blackbox .bb-s{font-size:11px;margin-top:8px;font-style:italic}
@@ -149,98 +198,129 @@ video{width:100%;display:block;transform:scaleX(-1)}
 
 <button class="gear" id="gearBtn" title="Google Drive settings">⚙</button>
 
-<!-- STEP 1: language -->
-<section class="screen active" id="scrLang">
-  <div class="masthead">
-    <h1>Nitirat MD Party</h1>
-    <div class="sub">Newspaper Photo Booth · Special Edition</div>
-  </div>
-  <div class="step-label">Step 1 — Select Language / เลือกภาษา</div>
-  <div class="lang-grid">
-    <div class="lang-card" data-lang="th"><div class="big">ภาษาไทย</div><div class="small">Thai</div></div>
-    <div class="lang-card" data-lang="en"><div class="big">English</div><div class="small">English</div></div>
-    <div class="lang-card" data-lang="zh"><div class="big">中文</div><div class="small">Chinese</div></div>
-    <div class="lang-card" data-lang="ko"><div class="big">한국어</div><div class="small">Korean</div></div>
-  </div>
-</section>
+<div class="cabinet">
+  <div class="tape-row"><span class="tape" id="tapeTop">Tap the screen to take a photo · แตะหน้าจอเพื่อถ่ายรูป</span></div>
 
-<!-- STEP 2: layout -->
-<section class="screen" id="scrLayout">
-  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="layoutSub">Choose your front page</div></div>
-  <div class="step-label" id="layoutStep">Step 2 — Choose Layout</div>
-  <div class="layout-grid">
-    <div class="layout-card" data-layout="1">
-      <div class="thumb">
-        <div class="t-head"></div>
-        <div class="t-row"><div class="t-photo" style="flex:1.4"></div><div class="t-col"><div class="t-text"></div><div class="t-photo"></div></div></div>
-        <div class="t-row" style="flex:.7"><div class="t-photo"></div><div class="t-text"></div></div>
-      </div>
-      <div class="name">The Main Characters</div><div class="shots">📷 × 3</div>
-    </div>
-    <div class="layout-card" data-layout="2">
-      <div class="thumb">
-        <div class="t-head"></div>
-        <div class="t-photo" style="flex:1.6"></div>
-        <div class="t-row" style="flex:.8"><div class="t-text"></div><div class="t-text"></div><div class="t-text"></div></div>
-      </div>
-      <div class="name">The Gazette</div><div class="shots">📷 × 1</div>
-    </div>
-    <div class="layout-card" data-layout="3">
-      <div class="thumb">
-        <div class="t-head"></div>
-        <div class="t-row"><div class="t-photo"></div><div class="t-col"><div class="t-text"></div><div class="t-text"></div></div></div>
-        <div class="t-row" style="flex:.9"><div class="t-col"><div class="t-text"></div></div><div class="t-photo"></div></div>
-      </div>
-      <div class="name">Birthday Post</div><div class="shots">📷 × 2</div>
-    </div>
-  </div>
-  <div class="center" style="margin-top:26px"><button class="btn ghost" id="backLang">← Back</button></div>
-</section>
+  <div class="screen-window">
 
-<!-- STEP 3: camera -->
-<section class="screen" id="scrCam">
-  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="camSub">Look at the camera!</div></div>
-  <div class="cam-wrap">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="count-overlay" id="countOverlay"></div>
-    <div class="flash" id="flash"></div>
-  </div>
-  <div class="shot-dots" id="shotDots"></div>
-  <div class="cam-msg" id="camMsg"></div>
-  <div class="center" style="margin-top:12px">
-    <button class="btn" id="startShoot">Start 📸</button>
-    <button class="btn ghost" id="backLayout">← Back</button>
-  </div>
-</section>
+    <!-- 0 · ATTRACT -->
+    <section class="screen active" id="scrAttract">
+      <div class="attract-orn">✦ ✦ ✦</div>
+      <div class="attract-mast">Nitirat MD Party</div>
+      <div class="attract-sub">Newspaper Photo Booth · Special Edition</div>
+      <svg class="attract-cam" viewBox="0 0 120 90" fill="none" stroke="#f4efe3" stroke-width="3">
+        <rect x="8" y="22" width="104" height="60" rx="6"/>
+        <rect x="42" y="10" width="36" height="14" rx="3"/>
+        <circle cx="60" cy="52" r="20"/>
+        <circle cx="60" cy="52" r="11"/>
+        <circle cx="97" cy="34" r="4" fill="#f4efe3" stroke="none"/>
+      </svg>
+      <div class="attract-langs">ไทย · ENGLISH · 中文 · 한국어</div>
+      <div class="center"><button class="btn tap-start" id="tapStart">แตะเพื่อเริ่ม · Tap to Start</button></div>
+    </section>
 
-<!-- STEP 4: printing / result -->
-<section class="screen" id="scrPrint">
-  <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub" id="printSub">Hot off the press</div></div>
-  <div class="printer">
-    <div class="slot"></div>
-    <div class="print-window" id="printWindow"><img id="printImg" alt="your newspaper"></div>
-    <div class="print-status working" id="printStatus">PRINTING…</div>
-  </div>
-  <div class="tone-bar" id="toneBar" style="display:none">
-    <span class="tone-label" id="toneLabel">Tone</span>
-    <button class="tone-btn sel" data-tone="bw"></button>
-    <button class="tone-btn" data-tone="film"></button>
-    <button class="tone-btn" data-tone="color"></button>
-  </div>
-  <div class="result-actions" id="resultActions" style="display:none">
-    <button class="btn" id="dlPng">⬇ PNG</button>
-    <button class="btn" id="dlPdf">⬇ PDF (A4)</button>
-    <button class="btn ghost" id="uploadDrive">☁ Save to Drive</button>
-    <button class="btn ghost" id="retake">↺ Retake</button>
-  </div>
-  <div class="drive-note" id="driveNote"></div>
-</section>
+    <!-- 1 · LAYOUT / จำนวนรูป -->
+    <section class="screen" id="scrLayout">
+      <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub">Choose your front page</div></div>
+      <div class="step-label">ขั้นที่ 1 — เลือกจำนวนรูป · Step 1 — Choose your layout</div>
+      <div class="layout-grid">
+        <div class="layout-card" data-layout="1">
+          <div class="thumb">
+            <div class="t-head"></div>
+            <div class="t-row"><div class="t-photo" style="flex:1.4"></div><div class="t-col"><div class="t-text"></div><div class="t-photo"></div></div></div>
+            <div class="t-row" style="flex:.7"><div class="t-photo"></div><div class="t-text"></div></div>
+          </div>
+          <div class="name">The Main Characters</div><div class="shots">📷 × 3</div>
+        </div>
+        <div class="layout-card" data-layout="2">
+          <div class="thumb">
+            <div class="t-head"></div>
+            <div class="t-photo" style="flex:1.6"></div>
+            <div class="t-row" style="flex:.8"><div class="t-text"></div><div class="t-text"></div><div class="t-text"></div></div>
+          </div>
+          <div class="name">The Gazette</div><div class="shots">📷 × 1</div>
+        </div>
+        <div class="layout-card" data-layout="3">
+          <div class="thumb">
+            <div class="t-head"></div>
+            <div class="t-row"><div class="t-photo"></div><div class="t-col"><div class="t-text"></div><div class="t-text"></div></div></div>
+            <div class="t-row" style="flex:.9"><div class="t-col"><div class="t-text"></div></div><div class="t-photo"></div></div>
+          </div>
+          <div class="name">Birthday Post</div><div class="shots">📷 × 2</div>
+        </div>
+      </div>
+      <div class="center" style="margin-top:22px"><button class="btn ghost" id="backAttract">← Back</button></div>
+    </section>
+
+    <!-- 2 · LANGUAGE -->
+    <section class="screen" id="scrLang">
+      <div class="masthead"><h1>Nitirat MD Party</h1><div class="sub">Pick your language</div></div>
+      <div class="step-label">ขั้นที่ 2 — เลือกภาษาหนังสือพิมพ์ · Step 2 — Choose your newspaper language</div>
+      <div class="lang-grid">
+        <div class="lang-card" data-lang="th"><div class="big">ภาษาไทย</div><div class="small">Thai</div></div>
+        <div class="lang-card" data-lang="en"><div class="big">English</div><div class="small">English</div></div>
+        <div class="lang-card" data-lang="zh"><div class="big">中文</div><div class="small">Chinese</div></div>
+        <div class="lang-card" data-lang="ko"><div class="big">한국어</div><div class="small">Korean</div></div>
+      </div>
+      <div class="center" style="margin-top:22px"><button class="btn ghost" id="backLayout">← Back</button></div>
+    </section>
+
+    <!-- 3 · CAMERA (live paper preview) -->
+    <section class="screen" id="scrCam">
+      <div class="step-label" id="camSub" style="margin-bottom:10px"></div>
+      <div class="live-area">
+        <div class="live-frame" id="liveFrame"><div class="paper" id="livePaper"></div></div>
+      </div>
+      <div class="shot-dots" id="shotDots"></div>
+      <div class="cam-msg" id="camMsg"></div>
+      <div class="center" style="margin-top:8px">
+        <button class="btn" id="startShoot">Start 📸</button>
+        <button class="btn ghost" id="backLang">← Back</button>
+      </div>
+    </section>
+
+    <!-- 4 · PRINT / RESULT -->
+    <section class="screen" id="scrPrint">
+      <div class="result-wrap">
+        <div>
+          <div class="printer">
+            <div class="slot"></div>
+            <div class="print-window" id="printWindow"><img id="printImg" alt="your newspaper"></div>
+          </div>
+          <div class="print-status working" id="printStatus">PRINTING…</div>
+        </div>
+        <div class="result-side" id="resultSide" style="display:none">
+          <div class="tone-bar">
+            <span class="tone-label">Tone</span>
+            <button class="tone-btn sel" data-tone="bw"></button>
+            <button class="tone-btn" data-tone="film"></button>
+            <button class="tone-btn" data-tone="color"></button>
+          </div>
+          <div class="qr-title" id="qrTitle"></div>
+          <div class="qr-area" id="qrArea"></div>
+          <div class="drive-note" id="driveNote"></div>
+          <div class="result-actions">
+            <button class="btn ghost" id="dlPng">⬇ PNG</button>
+            <button class="btn ghost" id="dlPdf">⬇ PDF</button>
+            <button class="btn ghost" id="retake">↺ Retake</button>
+            <button class="btn" id="newGuest">★ Next Guest</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /screen-window -->
+
+  <div class="print-slot-deco"></div>
+  <div class="coin-note">No coin needed · Free unlimited smiles · Nitirat MD Party {YEAR}</div>
+  <div class="tape-row" style="margin-top:12px"><span class="tape b">Scan QR to download · สแกน QR เพื่อดาวน์โหลดรูป</span></div>
+</div>
 
 <!-- Drive settings modal -->
 <div class="modal" id="driveModal">
   <div class="box">
     <h3>Google Drive Upload</h3>
-    <p>วาง URL ของ Google Apps Script Web App (ดูไฟล์ google-apps-script.gs ประกอบ) — ตั้งครั้งเดียว เครื่องจะจำไว้ให้</p>
+    <p>วาง URL ของ Google Apps Script Web App (ดูไฟล์ google-apps-script.gs ประกอบ) — ตั้งครั้งเดียว เครื่องจะจำไว้ให้ / QR code จะทำงานเมื่อตั้งค่านี้แล้วเท่านั้น</p>
     <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn ghost" id="closeModal">Close</button>
@@ -251,14 +331,17 @@ video{width:100%;display:block;transform:scaleX(-1)}
 
 <!-- hidden A4 stage -->
 <div id="paperStage"><div class="paper" id="paper"></div></div>
+<video id="video" autoplay playsinline muted style="display:none"></video>
 <canvas id="grab" style="display:none"></canvas>
 
 <script>
 /* =================== CONTENT (4 languages) =================== */
 const TODAY = new Date();
+document.querySelector('.coin-note').textContent=document.querySelector('.coin-note').textContent.replace('{YEAR}',TODAY.getFullYear());
+
 const L = {
 th:{
-  ui:{layoutStep:'ขั้นที่ 2 — เลือกเลย์เอาต์', layoutSub:'เลือกหน้าหนึ่งของคุณ', camSub:'มองกล้องแล้วยิ้ม!', ready:'พร้อมแล้วกด Start ได้เลย', next:'เตรียมตัว… รูปถัดไป!', done:'ครบแล้ว! กำลังพิมพ์…', printing:'กำลังพิมพ์…', printed:'พิมพ์เสร็จแล้ว! ดาวน์โหลดได้เลย', uploading:'กำลังอัปโหลดเข้า Drive…', uploaded:'✅ บันทึกลง Google Drive แล้ว', uploadFail:'❌ อัปโหลดไม่สำเร็จ — เช็ค URL ในตั้งค่า (⚙)', noGas:'ยังไม่ได้ตั้งค่า Drive — กด ⚙ มุมขวาบนก่อนนะ'},
+  ui:{camSub:'ขั้นที่ 3 — มองกล้องแล้วยิ้ม! ภาพจะขึ้นในหน้าหนังสือพิมพ์เลย', ready:'พร้อมแล้วกด Start ได้เลย', next:'เตรียมตัว… รูปถัดไป!', done:'ครบแล้ว! กำลังพิมพ์…', printing:'กำลังพิมพ์…', printed:'พิมพ์เสร็จแล้ว!', uploading:'กำลังสร้าง QR code…', qrTitle:'📱 สแกนเพื่อดูและดาวน์โหลดรูป', uploadFail:'❌ สร้าง QR ไม่สำเร็จ — เช็คการตั้งค่า (⚙) หรือใช้ปุ่มดาวน์โหลดด้านล่าง', noGas:'ยังไม่ได้ตั้งค่า Drive (⚙) — ใช้ปุ่มดาวน์โหลดด้านล่างได้เลย'},
   date:()=>TODAY.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
   masthead:'Nitirat MD Party', edition:'ฉบับพิเศษ วันเกิดเอ็มดี', price:'ฉบับละความสุข',
   l1:{head:'คุณคือตัวเอกของเรื่องนี้', sub:'ช่วงเวลานี้เป็นของคุณ — ที่นี่ ตอนนี้',
@@ -274,7 +357,7 @@ th:{
       chapter:'บทที่', cap:['ภาพแรกแห่งค่ำคืน','อีกหนึ่งช็อตประทับใจ'], footer:'ฉบับพิเศษ ★ พิมพ์ด้วยความสุข'}
 },
 en:{
-  ui:{layoutStep:'Step 2 — Choose Layout', layoutSub:'Choose your front page', camSub:'Look at the camera!', ready:'Ready — press Start!', next:'Get ready… next shot!', done:'All done! Printing…', printing:'PRINTING…', printed:'Fresh off the press — download below', uploading:'Uploading to Drive…', uploaded:'✅ Saved to Google Drive', uploadFail:'❌ Upload failed — check URL in settings (⚙)', noGas:'Drive not set up yet — press ⚙ top-right first'},
+  ui:{camSub:'Step 3 — Look at the camera! You appear right on the front page', ready:'Ready — press Start!', next:'Get ready… next shot!', done:'All done! Printing…', printing:'PRINTING…', printed:'Fresh off the press!', uploading:'Generating QR code…', qrTitle:'📱 Scan to view & download', uploadFail:'❌ QR failed — check settings (⚙) or use download buttons below', noGas:'Drive not set up (⚙) — use the download buttons below'},
   date:()=>TODAY.toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
   masthead:'Nitirat MD Party', edition:'MD Birthday Special Edition', price:'Priceless',
   l1:{head:'You Are The Main Characters', sub:'Right here, right now, this moment belongs to you',
@@ -290,7 +373,7 @@ en:{
       chapter:'Chapter', cap:['First shot of the night','One more unforgettable frame'], footer:'Special Edition ★ Printed with happiness'}
 },
 zh:{
-  ui:{layoutStep:'第二步 — 选择版面', layoutSub:'选择你的头版', camSub:'看镜头，笑一个！', ready:'准备好了就按开始！', next:'准备好…下一张！', done:'拍完了！正在打印…', printing:'打印中…', printed:'新鲜出炉 — 请下载', uploading:'正在上传到云端硬盘…', uploaded:'✅ 已保存到 Google Drive', uploadFail:'❌ 上传失败 — 请检查设置 (⚙)', noGas:'尚未设置 Drive — 请先点右上角 ⚙'},
+  ui:{camSub:'第三步 — 看镜头！你会直接出现在头版上', ready:'准备好了就按开始！', next:'准备好…下一张！', done:'拍完了！正在打印…', printing:'打印中…', printed:'新鲜出炉！', uploading:'正在生成二维码…', qrTitle:'📱 扫码查看并下载', uploadFail:'❌ 二维码生成失败 — 请检查设置 (⚙) 或使用下方下载按钮', noGas:'尚未设置 Drive (⚙) — 请使用下方下载按钮'},
   date:()=>TODAY.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
   masthead:'Nitirat MD Party', edition:'MD 生日特刊', price:'无价',
   l1:{head:'你就是今晚的主角', sub:'此时此刻，这一瞬间属于你',
@@ -306,7 +389,7 @@ zh:{
       chapter:'章节', cap:['今晚的第一张','再来一张难忘瞬间'], footer:'特别版 ★ 用幸福印刷'}
 },
 ko:{
-  ui:{layoutStep:'2단계 — 레이아웃 선택', layoutSub:'당신의 1면을 선택하세요', camSub:'카메라를 보고 웃어주세요!', ready:'준비되면 시작을 눌러주세요!', next:'준비하세요… 다음 컷!', next:'준비하세요… 다음 컷!', done:'촬영 완료! 인쇄 중…', printing:'인쇄 중…', printed:'따끈따끈한 신문 완성 — 다운로드하세요', uploading:'드라이브에 업로드 중…', uploaded:'✅ Google Drive에 저장되었습니다', uploadFail:'❌ 업로드 실패 — 설정(⚙)에서 URL을 확인하세요', noGas:'Drive 설정이 안 되어 있어요 — 우측 상단 ⚙ 를 먼저 눌러주세요'},
+  ui:{camSub:'3단계 — 카메라를 보세요! 1면에 바로 등장합니다', ready:'준비되면 시작을 눌러주세요!', next:'준비하세요… 다음 컷!', done:'촬영 완료! 인쇄 중…', printing:'인쇄 중…', printed:'따끈따끈한 신문 완성!', uploading:'QR 코드 생성 중…', qrTitle:'📱 스캔해서 보기 & 다운로드', uploadFail:'❌ QR 생성 실패 — 설정(⚙)을 확인하거나 아래 다운로드 버튼을 사용하세요', noGas:'Drive 미설정 (⚙) — 아래 다운로드 버튼을 사용하세요'},
   date:()=>TODAY.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'}),
   masthead:'Nitirat MD Party', edition:'MD 생일 특별판', price:'값을 매길 수 없음',
   l1:{head:'오늘 밤의 주인공은 바로 당신', sub:'바로 지금, 이 순간은 당신의 것',
@@ -326,62 +409,198 @@ ko:{
 const SHOTS = {1:3, 2:1, 3:2};
 
 /* =================== STATE =================== */
-let lang='en', layout=1, photos=[], stream=null, finalCanvas=null;
+let lang='th', layout=1, photos=[], stream=null, finalCanvas=null, shooting=false;
 
 const $=id=>document.getElementById(id);
+const videoEl=document.getElementById('video');
 const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* =================== NAV =================== */
-document.querySelectorAll('.lang-card').forEach(c=>c.onclick=()=>{
+$('tapStart').onclick=()=>show('scrLayout');
+$('backAttract').onclick=()=>show('scrAttract');
+document.querySelectorAll('.layout-card').forEach(c=>c.onclick=()=>{ layout=+c.dataset.layout; show('scrLang'); });
+$('backLayout').onclick=()=>show('scrLayout');
+document.querySelectorAll('.lang-card').forEach(c=>c.onclick=async()=>{
   lang=c.dataset.lang;
-  $('layoutStep').textContent=L[lang].ui.layoutStep;
-  $('layoutSub').textContent=L[lang].ui.layoutSub;
-  show('scrLayout');
+  await enterCamera();
 });
-document.querySelectorAll('.layout-card').forEach(c=>c.onclick=async()=>{
-  layout=+c.dataset.layout;
-  $('camSub').textContent=L[lang].ui.camSub;
-  $('camMsg').textContent=L[lang].ui.ready;
-  buildDots();
-  show('scrCam');
-  await startCam();
-});
-$('backLang').onclick=()=>show('scrLang');
-$('backLayout').onclick=()=>{stopCam();show('scrLayout');};
+$('backLang').onclick=()=>{stopCam();show('scrLang');};
+
+/* =================== PAPER TEMPLATES (slot-based) =================== */
+function paperHTML(){
+  const t=L[lang];
+  const top=`
+    <div class="p-topline"><span>${t.edition}</span><span>${t.date()}</span><span>${t.price}</span></div>
+    <hr class="p-rule thick">
+    <div class="p-masthead">${t.masthead}</div>
+    <hr class="p-rule dbl">`;
+  if(layout===1){
+    const c=t.l1;
+    return `${top}
+      <div class="p-headline" style="font-size:40px;margin:12px 0 4px">${c.head}</div>
+      <div style="text-align:center;font-style:italic;font-size:14px;margin-bottom:12px">${c.sub}</div>
+      <hr class="p-rule">
+      <div style="display:flex;gap:16px;margin-top:14px">
+        <div style="flex:1.35">
+          <div class="p-photo p-slot" data-idx="0" style="height:430px"></div>
+          <div class="p-caption">${c.cap[0]}</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+          <div class="p-body">${c.body.map(x=>`<p>${x}</p>`).join('')}</div>
+          <div class="p-photo p-slot" data-idx="1" style="height:180px"></div>
+          <div class="p-caption">${c.cap[1]}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:18px">
+        <div style="flex:1"><div class="p-photo p-slot" data-idx="2" style="height:225px"></div><div class="p-caption">${c.cap[2]}</div></div>
+        <div style="flex:1.1;display:flex;flex-direction:column;gap:12px;justify-content:center">
+          <div class="p-blackbox"><div class="bb-t">${c.box}</div><div class="bb-s">${c.boxSub}</div></div>
+        </div>
+      </div>
+      <div class="p-footer">${c.footer}</div>`;
+  }
+  if(layout===2){
+    const c=t.l2;
+    return `${top}
+      <div class="p-headline" style="font-size:34px;margin:10px 0 2px">${c.head}</div>
+      <div style="text-align:center;font-size:14px;font-weight:700;border-top:1.5px solid #141210;border-bottom:1.5px solid #141210;padding:5px 0;margin:8px 0 14px">${c.sub}</div>
+      <div class="p-photo p-slot" data-idx="0" style="height:520px"></div>
+      <div class="p-caption" style="margin-bottom:12px">${c.cap}</div>
+      <hr class="p-rule">
+      <div style="display:flex;gap:18px;margin-top:12px">
+        ${c.col.map(([h,b])=>`
+          <div style="flex:1">
+            <div style="font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:14px;text-align:center;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:6px">${h}</div>
+            <div class="p-body">${b}</div>
+          </div>`).join('')}
+      </div>
+      <div class="p-footer">${c.footer}</div>`;
+  }
+  // layout 3
+  const c=t.l3;
+  const day=TODAY.getDate(), mon=TODAY.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();
+  return `
+    <div class="p-topline"><span>${t.edition}</span><span></span><span>${t.price}</span></div>
+    <div class="p-masthead" style="font-size:56px">${t.masthead}</div>
+    <div class="p-tagline">✦ ${c.sub} ✦</div>
+    <hr class="p-rule dbl">
+    <div style="display:flex;gap:18px;margin-top:16px">
+      <div style="flex:1">
+        <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.about}</div>
+        <div class="p-body" style="font-size:13px">${c.aboutBody}</div>
+        <div class="p-datebox" style="margin-top:16px">
+          <div style="font-size:34px;font-weight:700">${day}</div>
+          <div style="letter-spacing:3px">${mon}</div>
+          <hr class="p-rule" style="margin:6px 0">
+          <div style="font-size:12px">${c.chapter} ${TODAY.getFullYear()}</div>
+        </div>
+      </div>
+      <div style="flex:1.3">
+        <div class="p-photo p-slot" data-idx="0" style="height:420px"></div>
+        <div class="p-caption">${c.cap[0]}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:18px;margin-top:18px">
+      <div style="flex:1.2">
+        <div class="p-photo p-slot" data-idx="1" style="height:300px"></div>
+        <div class="p-caption">${c.cap[1]}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.know}</div>
+        <div style="font-size:13px">${c.knowBody.map(x=>`<p style="margin-bottom:8px;border-bottom:1px dotted #141210;padding-bottom:6px">◦ ${x}</p>`).join('')}</div>
+      </div>
+    </div>
+    <div class="p-footer">${c.footer}</div>`;
+}
+
+/* เติมรูปลงช่อง: srcList = รายการรูป, liveIdx = ช่องที่ใส่วิดีโอสด (-1 = ไม่มี) */
+function fillSlots(root, srcList, liveIdx){
+  root.querySelectorAll('.p-slot').forEach(slot=>{
+    const i=+slot.dataset.idx;
+    slot.classList.remove('pending','live');
+    slot.innerHTML='';
+    if(srcList[i]){
+      const img=document.createElement('img'); img.src=srcList[i]; slot.appendChild(img);
+    }else if(i===liveIdx){
+      slot.classList.add('live');
+      slot.appendChild(videoEl);
+      videoEl.style.display='block';
+      const cnt=document.createElement('div');cnt.className='slot-count';cnt.id='slotCount';slot.appendChild(cnt);
+      const fl=document.createElement('div');fl.className='slot-flash';fl.id='slotFlash';slot.appendChild(fl);
+    }else{
+      slot.classList.add('pending');
+    }
+  });
+}
 
 /* =================== CAMERA =================== */
 async function startCam(){
+  if(stream) return true;
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:960},facingMode:'user'},audio:false});
-    $('video').srcObject=stream;
-  }catch(e){ $('camMsg').textContent='⚠ Camera permission needed / กรุณาอนุญาตกล้อง'; }
+    videoEl.srcObject=stream;
+    return true;
+  }catch(e){
+    $('camMsg').textContent='⚠ Camera permission needed / กรุณาอนุญาตกล้อง';
+    return false;
+  }
 }
-function stopCam(){ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} }
+function stopCam(){ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} document.body.appendChild(videoEl); videoEl.style.display='none'; }
+
+function fitLivePaper(){
+  const avail=Math.min(window.innerWidth-140, 1000);
+  const availH=Math.max(window.innerHeight-360, 380);
+  const s=Math.min(avail/794, availH/1123, 0.62);
+  const lp=$('livePaper'), lf=$('liveFrame');
+  lp.style.transform=`scale(${s})`;
+  lf.style.width=(794*s)+'px';
+  lf.style.height=(1123*s)+'px';
+}
+window.addEventListener('resize',()=>{ if($('scrCam').classList.contains('active')) fitLivePaper(); });
+
+async function enterCamera(){
+  photos=[];
+  $('camSub').textContent=L[lang].ui.camSub;
+  $('camMsg').textContent=L[lang].ui.ready;
+  buildDots();
+  $('livePaper').innerHTML=paperHTML();
+  show('scrCam');
+  fitLivePaper();
+  const ok=await startCam();
+  fillSlots($('livePaper'), photos, ok?0:-1);
+}
 
 function buildDots(){
   const n=SHOTS[layout], d=$('shotDots'); d.innerHTML='';
   for(let i=0;i<n;i++){const s=document.createElement('div');s.className='dot';d.appendChild(s);}
 }
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 $('startShoot').onclick=async()=>{
-  $('startShoot').disabled=true; photos=[];
+  if(shooting) return;
+  if(!await startCam()) return;
+  shooting=true; $('startShoot').disabled=true; photos=[];
+  fillSlots($('livePaper'), photos, 0);
   const n=SHOTS[layout];
   for(let i=0;i<n;i++){
-    $('camMsg').textContent=(i>0?L[lang].ui.next:'')+`  ${i+1}/${n}`;
-    for(let c=3;c>=1;c--){ $('countOverlay').textContent=c; await wait(1000); }
-    $('countOverlay').textContent='';
-    $('flash').classList.add('on'); capture(); await wait(180); $('flash').classList.remove('on');
+    $('camMsg').textContent=(i>0?L[lang].ui.next+'  ':'')+`${i+1}/${n}`;
+    for(let c=3;c>=1;c--){ const el=$('slotCount'); if(el)el.textContent=c; await wait(1000); }
+    const el=$('slotCount'); if(el)el.textContent='';
+    const fl=$('slotFlash'); if(fl)fl.classList.add('on');
+    capture();
+    await wait(180); if(fl)fl.classList.remove('on');
     document.querySelectorAll('.dot')[i].classList.add('done');
-    await wait(700);
+    fillSlots($('livePaper'), photos, i+1<n ? i+1 : -1);   // รูปนิ่งเข้าช่อง วิดีโอย้ายช่องถัดไป
+    await wait(600);
   }
   $('camMsg').textContent=L[lang].ui.done;
-  stopCam(); $('startShoot').disabled=false;
+  stopCam(); videoEl.style.display='none';
+  shooting=false; $('startShoot').disabled=false;
   goPrint();
 };
 
 function capture(){
-  const v=$('video'), c=$('grab');
+  const v=videoEl, c=$('grab');
   c.width=v.videoWidth; c.height=v.videoHeight;
   const ctx=c.getContext('2d');
   ctx.translate(c.width,0); ctx.scale(-1,1);            // mirror = selfie style
@@ -398,8 +617,8 @@ const TONES={
   film:{label:{th:'ฟิล์มนัว',en:'Film',zh:'胶片',ko:'필름'},
     fn:(r,g,b)=>{
       const y=r*0.299+g*0.587+b*0.114;
-      const f=(y-128)*0.82+128;                          // ลด contrast ให้นัว
-      return[clamp(f*1.02+34),clamp(f*0.94+26),clamp(f*0.72+18)]; // ย้อมเหลืองอุ่น + ยกเงาให้ซีด
+      const f=(y-128)*0.82+128;
+      return[clamp(f*1.02+34),clamp(f*0.94+26),clamp(f*0.72+18)];
     }},
   color:{label:{th:'สีปกติ',en:'Color',zh:'彩色',ko:'컬러'},
     fn:(r,g,b)=>[clamp((r-128)*1.04+130),clamp((g-128)*1.04+129),clamp((b-128)*1.04+124)]}
@@ -424,110 +643,23 @@ function applyTone(dataURL,toneKey){
 }
 async function processTones(){ tonedPhotos=await Promise.all(photos.map(p=>applyTone(p,tone))); }
 
-/* =================== BUILD PAPER =================== */
-function buildPaper(){
-  const t=L[lang], p=$('paper');
-  const ph=tonedPhotos.length?tonedPhotos:photos;
-  const top=`
-    <div class="p-topline"><span>${t.edition}</span><span>${t.date()}</span><span>${t.price}</span></div>
-    <hr class="p-rule thick">
-    <div class="p-masthead">${t.masthead}</div>
-    <hr class="p-rule dbl">`;
-  if(layout===1){
-    const c=t.l1;
-    p.innerHTML=`${top}
-      <div class="p-headline" style="font-size:40px;margin:12px 0 4px">${c.head}</div>
-      <div style="text-align:center;font-style:italic;font-size:14px;margin-bottom:12px">${c.sub}</div>
-      <hr class="p-rule">
-      <div style="display:flex;gap:16px;margin-top:14px">
-        <div style="flex:1.35">
-          <div class="p-photo" style="height:430px"><img src="${ph[0]}"></div>
-          <div class="p-caption">${c.cap[0]}</div>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:12px">
-          <div class="p-body">${c.body.map(x=>`<p>${x}</p>`).join('')}</div>
-          <div class="p-photo" style="height:180px"><img src="${ph[1]}"></div>
-          <div class="p-caption">${c.cap[1]}</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:16px;margin-top:18px">
-        <div style="flex:1"><div class="p-photo" style="height:225px"><img src="${ph[2]}"></div><div class="p-caption">${c.cap[2]}</div></div>
-        <div style="flex:1.1;display:flex;flex-direction:column;gap:12px;justify-content:center">
-          <div class="p-blackbox"><div class="bb-t">${c.box}</div><div class="bb-s">${c.boxSub}</div></div>
-        </div>
-      </div>
-      <div class="p-footer">${c.footer}</div>`;
-  }
-  if(layout===2){
-    const c=t.l2;
-    p.innerHTML=`${top}
-      <div class="p-headline" style="font-size:34px;margin:10px 0 2px">${c.head}</div>
-      <div style="text-align:center;font-size:14px;font-weight:700;border-top:1.5px solid #141210;border-bottom:1.5px solid #141210;padding:5px 0;margin:8px 0 14px">${c.sub}</div>
-      <div class="p-photo" style="height:520px"><img src="${ph[0]}"></div>
-      <div class="p-caption" style="margin-bottom:12px">${c.cap}</div>
-      <hr class="p-rule">
-      <div style="display:flex;gap:18px;margin-top:12px">
-        ${c.col.map(([h,b])=>`
-          <div style="flex:1">
-            <div style="font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:14px;text-align:center;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:6px">${h}</div>
-            <div class="p-body">${b}</div>
-          </div>`).join('')}
-      </div>
-      <div class="p-footer">${c.footer}</div>`;
-  }
-  if(layout===3){
-    const c=t.l3;
-    const day=TODAY.getDate(), mon=TODAY.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();
-    p.innerHTML=`
-      <div class="p-topline"><span>${t.edition}</span><span></span><span>${t.price}</span></div>
-      <div class="p-masthead" style="font-size:56px">${t.masthead}</div>
-      <div class="p-tagline">✦ ${c.sub} ✦</div>
-      <hr class="p-rule dbl">
-      <div style="display:flex;gap:18px;margin-top:16px">
-        <div style="flex:1">
-          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.about}</div>
-          <div class="p-body" style="font-size:13px">${c.aboutBody}</div>
-          <div class="p-datebox" style="margin-top:16px">
-            <div style="font-size:34px;font-weight:700">${day}</div>
-            <div style="letter-spacing:3px">${mon}</div>
-            <hr class="p-rule" style="margin:6px 0">
-            <div style="font-size:12px">${c.chapter} ${TODAY.getFullYear()}</div>
-          </div>
-        </div>
-        <div style="flex:1.3">
-          <div class="p-photo" style="height:420px"><img src="${ph[0]}"></div>
-          <div class="p-caption">${c.cap[0]}</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:18px;margin-top:18px">
-        <div style="flex:1.2">
-          <div class="p-photo" style="height:300px"><img src="${ph[1]}"></div>
-          <div class="p-caption">${c.cap[1]}</div>
-        </div>
-        <div style="flex:1">
-          <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;border-bottom:1.5px solid #141210;padding-bottom:4px;margin-bottom:8px">${c.know}</div>
-          <div style="font-size:13px">${c.knowBody.map(x=>`<p style="margin-bottom:8px;border-bottom:1px dotted #141210;padding-bottom:6px">◦ ${x}</p>`).join('')}</div>
-        </div>
-      </div>
-      <div class="p-footer">${c.footer}</div>`;
-  }
-}
-
-/* =================== PRINT & EXPORT =================== */
+/* =================== RENDER & PRINT =================== */
 async function renderPaper(){
-  buildPaper();
+  const p=$('paper');
+  p.innerHTML=paperHTML();
+  fillSlots(p, tonedPhotos, -1);
   await document.fonts.ready;
   await wait(200);
-  finalCanvas=await html2canvas($('paper'),{scale:3,useCORS:true,backgroundColor:'#f6f2e7'});
+  finalCanvas=await html2canvas(p,{scale:3,useCORS:true,backgroundColor:'#f6f2e7'});
   $('printImg').src=finalCanvas.toDataURL('image/png');
 }
 
 async function goPrint(){
-  $('printSub').textContent='Hot off the press';
-  $('printStatus').textContent=L[lang].ui.printing;
+  const u=L[lang].ui;
+  $('printStatus').textContent=u.printing;
   $('printStatus').classList.add('working');
-  $('resultActions').style.display='none';
-  $('toneBar').style.display='none';
+  $('resultSide').style.display='none';
+  $('qrArea').innerHTML=''; $('driveNote').textContent='';
   $('printWindow').style.height='0';
   show('scrPrint');
   tone='bw';
@@ -535,22 +667,22 @@ async function goPrint(){
     b.classList.toggle('sel',b.dataset.tone===tone);
     b.textContent=TONES[b.dataset.tone].label[lang];
   });
+  $('qrTitle').textContent=u.qrTitle;
   await processTones();
   await renderPaper();
   await wait(200);
-  // paper slides out of the slot
   const win=$('printWindow');
   win.style.height=(win.offsetWidth*1123/794)+'px';
-  setTimeout(()=>{
+  setTimeout(async()=>{
     $('printStatus').classList.remove('working');
-    $('printStatus').textContent=L[lang].ui.printed;
-    $('toneBar').style.display='flex';
-    $('resultActions').style.display='flex';
+    $('printStatus').textContent=u.printed;
+    $('resultSide').style.display='block';
+    publishQR();                                   // QR ขึ้นทันที
   },3300);
 }
 
 document.querySelectorAll('.tone-btn').forEach(btn=>btn.onclick=async()=>{
-  if(btn.dataset.tone===tone)return;
+  if(btn.dataset.tone===tone||shooting)return;
   tone=btn.dataset.tone;
   document.querySelectorAll('.tone-btn').forEach(b=>{b.classList.toggle('sel',b===btn);b.disabled=true;});
   $('printStatus').textContent=L[lang].ui.printing;
@@ -560,11 +692,19 @@ document.querySelectorAll('.tone-btn').forEach(btn=>btn.onclick=async()=>{
   $('printStatus').classList.remove('working');
   $('printStatus').textContent=L[lang].ui.printed;
   document.querySelectorAll('.tone-btn').forEach(b=>b.disabled=false);
+  publishQR();                                     // อัปโหลดใหม่ตามโทนที่เลือก
 });
 
+/* =================== EXPORT =================== */
 function fileStem(){
   const d=TODAY.toISOString().slice(0,10);
   return `Nitirat-MD-Party_${d}_${Date.now().toString().slice(-5)}`;
+}
+function pdfBase64(){
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  pdf.addImage(finalCanvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
+  return pdf.output('datauristring').split(',')[1];
 }
 $('dlPng').onclick=()=>{
   const a=document.createElement('a');
@@ -578,28 +718,52 @@ $('dlPdf').onclick=()=>{
   pdf.addImage(finalCanvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
   pdf.save(fileStem()+'.pdf');
 };
-$('retake').onclick=async()=>{
-  photos=[]; buildDots();
-  $('camMsg').textContent=L[lang].ui.ready;
-  show('scrCam'); await startCam();
-};
+$('retake').onclick=async()=>{ await enterCamera(); };
+$('newGuest').onclick=()=>{ photos=[];tonedPhotos=[];stopCam();show('scrAttract'); };
 
-/* =================== GOOGLE DRIVE =================== */
+/* =================== QR / GOOGLE DRIVE =================== */
+let publishSeq=0;
+async function uploadOne(name,mime,base64){
+  const url=localStorage.getItem('gasUrl');
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({filename:name,mimeType:mime,data:base64})});
+  const j=await r.json();
+  if(!j.ok) throw new Error(j.error||'upload failed');
+  return j;
+}
+async function publishQR(){
+  const u=L[lang].ui, seq=++publishSeq;
+  $('qrArea').innerHTML='';
+  if(!localStorage.getItem('gasUrl')){ $('driveNote').textContent=u.noGas; return; }
+  $('driveNote').textContent=u.uploading;
+  try{
+    const stem=fileStem();
+    const [png,pdf]=await Promise.all([
+      uploadOne(stem+'.png','image/png',finalCanvas.toDataURL('image/png').split(',')[1]),
+      uploadOne(stem+'.pdf','application/pdf',pdfBase64())
+    ]);
+    if(seq!==publishSeq) return;                    // มีการกดโทนใหม่ระหว่างอัปโหลด
+    $('qrArea').innerHTML='';
+    [[png,'PNG'],[pdf,'PDF · A4']].forEach(([j,label])=>{
+      const card=document.createElement('div');card.className='qr-card';
+      const box=document.createElement('div');box.className='qr-box';
+      card.appendChild(box);
+      const nm=document.createElement('div');nm.className='qr-name';nm.textContent=label;
+      card.appendChild(nm);
+      $('qrArea').appendChild(card);
+      new QRCode(box,{text:j.viewUrl||j.url,width:158,height:158,correctLevel:QRCode.CorrectLevel.M});
+    });
+    $('driveNote').textContent='';
+  }catch(e){
+    if(seq!==publishSeq) return;
+    $('driveNote').textContent=u.uploadFail;
+  }
+}
+
+/* =================== SETTINGS =================== */
 $('gearBtn').onclick=()=>{ $('gasUrl').value=localStorage.getItem('gasUrl')||''; $('driveModal').classList.add('open'); };
 $('closeModal').onclick=()=>$('driveModal').classList.remove('open');
 $('saveGas').onclick=()=>{ localStorage.setItem('gasUrl',$('gasUrl').value.trim()); $('driveModal').classList.remove('open'); };
-
-$('uploadDrive').onclick=async()=>{
-  const url=localStorage.getItem('gasUrl');
-  if(!url){ $('driveNote').textContent=L[lang].ui.noGas; return; }
-  $('driveNote').textContent=L[lang].ui.uploading;
-  try{
-    const png=finalCanvas.toDataURL('image/png').split(',')[1];
-    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({filename:fileStem()+'.png',mimeType:'image/png',data:png})});
-    $('driveNote').textContent=L[lang].ui.uploaded;
-  }catch(e){ $('driveNote').textContent=L[lang].ui.uploadFail; }
-};
 </script>
 </body>
 </html>
